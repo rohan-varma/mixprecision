@@ -44,7 +44,30 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 import os
 
-# os.environ["TORCH_CPP_SHOW_STACKTRACES="] = "1"
+fpSixteen = MixedPrecision(
+    param_dtype=torch.float16,
+    # Gradient communication precision.
+    reduce_dtype=torch.float16,
+    # Buffer precision.
+    buffer_dtype=torch.float16,
+)
+
+bfSixteen = MixedPrecision(
+    param_dtype=torch.bfloat16,
+    # Gradient communication precision.
+    reduce_dtype=torch.bfloat16,
+    # Buffer precision.
+    buffer_dtype=torch.bfloat16,
+)
+
+bfSixteen_working = MixedPrecision(
+    param_dtype=torch.float32,
+    reduce_dtype=torch.bfloat16,
+    buffer_dtype=torch.bfloat16,
+)
+
+
+active_policy = bfSixteen
 
 
 def setup(rank, world_size):
@@ -202,38 +225,13 @@ def ddp_main(rank, world_size, args):
 
     init_start_event.record()
 
-    # model = model.to(rank)
-    fpSixteen = MixedPrecision(
-        # param_dtype=torch.float16,
-        # Gradient communication precision.
-        reduce_dtype=torch.float16,
-        # Buffer precision.
-        buffer_dtype=torch.float16,
-    )
-
-    bfSixteen = MixedPrecision(
-        param_dtype=torch.bfloat16,
-        # Gradient communication precision.
-        reduce_dtype=torch.bfloat16,
-        # Buffer precision.
-        buffer_dtype=torch.bfloat16,
-    )
-
-    """  module: nn.Module,
-        process_group: Optional[ProcessGroup] = None,
-        sharding_strategy: Optional[ShardingStrategy] = None,
-        cpu_offload: Optional[CPUOffload] = None,
-        auto_wrap_policy: Optional[Callable] = None,
-        backward_prefetch: Optional[BackwardPrefetch] = None,
-        mixed_precision: Optional[MixedPrecision] = None
-    ):"""
-        # Show full C++ stacktraces when a Python error originating from C++ is raised.
-        os.environ["TORCH_SHOW_CPP_STACKTRACES"] = "1"
+    # Show full C++ stacktraces when a Python error originating from C++ is raised.
+    os.environ["TORCH_SHOW_CPP_STACKTRACES"] = "1"
 
     model = FSDP(
         model,
         auto_wrap_policy=bert_wrap_policy,
-        mixed_precision=bfSixteen,
+        mixed_precision=active_policy,
     ).to(rank)
 
     if rank == 0:
