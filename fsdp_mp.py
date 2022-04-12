@@ -43,6 +43,7 @@ from pathlib import Path
 
 from sklearn.model_selection import train_test_split
 import os
+import mp_configs.verify as verify
 
 fpSixteen = MixedPrecision(
     param_dtype=torch.float16,
@@ -67,7 +68,21 @@ bfSixteen_working = MixedPrecision(
 )
 
 
-active_policy = bfSixteen
+bf16_ready = verify.bf16_ready
+
+if bf16_ready:
+    # active_policy = bfSixteen
+    print(f"bFloat16 enabled for mixed precision")
+else:
+    # active_policy = fpSixteen
+    print(f"bFloat16 support not present. Using fp16 for mixed precision")
+
+
+# ------------ mp policy ------------------
+
+active_policy = bfSixteen  # adjust here to implement various mixed precision scenarios
+
+# ------------------------------------------
 
 
 def setup(rank, world_size):
