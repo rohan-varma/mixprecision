@@ -80,7 +80,7 @@ else:
 
 # ------------ mp policy ------------------
 
-active_policy = bfSixteen  # adjust here to implement various mixed precision scenarios
+active_policy = fpSixteen  # adjust here to implement various mixed precision scenarios
 
 # ------------------------------------------
 
@@ -188,7 +188,7 @@ def read_imdb_split(split_dir):
 
 
 def ddp_main(rank, world_size, args):
-
+    print(" --- hi --- ")
     os.environ["TORCH_SHOW_CPP_STACKTRACES"] = str(1)
 
     model_name = "bert-base-uncased"
@@ -342,4 +342,6 @@ if __name__ == "__main__":
     torch.manual_seed(args.seed)
 
     WORLD_SIZE = torch.cuda.device_count()
+    print(" spawning")
+    print(WORLD_SIZE, args)
     mp.spawn(ddp_main, args=(WORLD_SIZE, args), nprocs=WORLD_SIZE, join=True)
